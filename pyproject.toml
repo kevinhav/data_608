@@ -1,0 +1,16 @@
+[project]
+name = "data-608"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ipykernel>=6.30.1",
+    "numpy>=2.3.2",
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.2",
+    "plotly>=6.3.0",
+    "pyjanitor>=0.31.0",
+    "quarto-cli>=1.7.34",
+    "scikit-learn>=1.7.1",
+]

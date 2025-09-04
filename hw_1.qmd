@@ -1,0 +1,42 @@
+---
+title: "Federal Aid Reliance"
+author: "Kevin Havis"
+format: 
+  html:
+    code-fold: true
+    theme: cosmo
+jupyter: python3
+---
+
+```{python}
+
+import pandas as pd
+import plotly.graph_objects as go
+from janitor import clean_names
+
+# Load data
+df = pd.read_excel('story 1.xlsx').drop('Index', axis=1)
+
+# Clean columns
+df = clean_names(df)
+```
+
+```{python}
+
+
+fig = go.Figure(data=go.Choropleth(
+    locations=df['state'], 
+    z = df['fed_fund_%_of_state_revenue'],
+    locationmode = 'USA-states', # set of locations match entries in `locations`
+    colorscale = 'Reds',
+    text=df['state']
+    colorbar_title = "Reliance on Federal Funds",
+))
+
+fig.update_layout(
+    title_text = 'Reliance on Federal Funds',
+    geo_scope='usa', # limite map scope to USA
+)
+
+fig.show()
+```
