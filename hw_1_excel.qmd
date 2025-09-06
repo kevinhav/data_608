@@ -1,0 +1,36 @@
+---
+title: "Federal Aid Reliance"
+author: "Kevin Havis"
+format:
+  pdf:
+    mainfont: "Inter"
+    sansfont: "Inter"
+    fontsize: 11pt
+    geometry: 
+      - top=0.5in
+      - left=0.5in
+      - right=0.5in
+      - bottom=0.5in
+  html:
+    code-fold: true
+    theme: cosmo
+    embed-resources: true
+    fig-width: 10      # Increase width
+    fig-height: 6      # Adjust height
+    fig-dpi: 150
+jupyter: python3
+---
+
+# Does Federal Aid indicate Political Affiliation for the States?
+
+The Federal and State levels of government are foundational aspects of the United States polictical system. While both are able to operate independently within their jurisdiction, they still rely on each other, ideally symbiotically.
+
+The below graphic explores how States that receive a considerable amount of fiscal aid from the Federal government, through various relief programs, and how that may correlate to their overall Democratic (Blue) or Republican (Red) affiliation.
+
+Based on the data available, we can see that political affiliation may be correlated with greater amounts of federal aid received (calculated as a percentage of each state's total income). There are some obvious outliers, such as New Mexico, however Red states tend to lean more on federal aid that Blue.
+
+
+
+::: {style="margin: 2em 0;"}
+![](data608_graphic.jpg){width=100% fig-pos="H"}
+:::
