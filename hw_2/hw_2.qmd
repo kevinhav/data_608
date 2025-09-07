@@ -1,0 +1,111 @@
+---
+title: "Investigating the Interdependence Among Key Economic Indicators"
+subtitle: "DATA 608 - Story 2"
+author: "Kevin Havis"
+date: today
+date-format: "MMMM D, YYYY"
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: false
+    theme: cosmo
+    embed-resources: true
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+execute:
+  warning: false
+  message: false
+  echo: true
+  cache: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+# Load required libraries
+library(tidyverse)
+library(httr2)
+
+# Set default chunk options
+knitr::opts_chunk$set(
+  fig.width = 8,
+  fig.height = 6,
+  fig.align = "center",
+  out.width = "80%"
+)
+
+# Set ggplot theme
+theme_set(theme_minimal())
+```
+
+```{r}
+# API Key - Normally wouldn't share this but specified in the instructions
+api_key <- "486191162bba8179c3f286918db61916"
+url <- "https://api.stlouisfed.org"
+url_ext <- "fred/series/observations"
+series <- c('DJIA', 'DGS10', 'UNRATE')
+
+```
+
+```{r}
+# Get data from the FRED API for each series
+all_data <- series |> 
+  map(~ {
+  response <- request("https://api.stlouisfed.org") |>
+    req_url_path_append(url_ext) |>
+    req_url_query(
+      api_key = api_key,
+      series_id = "DJIA",
+      file_type = "json",
+      observation_start = '2000-01-01', # YYYY-MM-DD formatted string
+      observation_end = '2024-12-31',
+      frequency = 'm'
+    ) |>
+    req_perform() |> 
+    resp_body_json()
+  }) |> 
+  set_names(series)
+```
+
+```{r}
+# Extract the data to tibbles 
+extract_fred_data <- function(response) {
+  response$observations |>
+    map_dfr(~ tibble(
+      date = as.Date(.x$date),
+      value = if(.x$value == ".") NA_real_ else as.numeric(.x$value)
+    )) |>
+    filter(!is.na(value))
+}
+
+# Define datasets
+djia_data <- all_data$DJIA |> extract_fred_data()
+dgs10_data <- all_data$DGS10 |> extract_fred_data()
+unrate_data <- all_data$UNRATE |> extract_fred_data()
+
+# Append and melt
+combined_data <- bind_rows(
+  djia_data |> mutate(series_id = "Dow Jones Industrial Average"),
+  dgs10_data |> mutate(series_id = "10 Year Treasury Yields"), 
+  unrate_data |> mutate(series_id = "Unemployment Rate")
+) |>
+  pivot_longer(
+    cols = value,
+    values_to = "observation"
+  ) |> 
+  select(-name)
+  
+```
+
+```{r}
+# Plot the time series
+plot(combined_data$date, combined_data$observation)
+```
+
+
+
