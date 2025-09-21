@@ -5,17 +5,17 @@ author: "Kevin Havis"
 date: today
 date-format: "MMMM D, YYYY"
 format: 
+  pdf:
+    toc: false
+    number-sections: false
+    colorlinks: true
   html:
-    toc: true
+    toc: false
     toc-depth: 3
     number-sections: true
-    code-fold: false
+    code-fold: true
     theme: cosmo
     embed-resources: true
-  pdf:
-    toc: true
-    number-sections: true
-    colorlinks: true
 execute:
   warning: false
   message: false
@@ -43,36 +43,67 @@ knitr::opts_chunk$set(
 theme_set(theme_minimal())
 ```
 
+## Economic Indicators and their Relationships
+
+The economy, as complex as it is, can be monitored by only a few key parameters. In the United States, some of the most common are Treasury note yields, the Dow Jones Industrial Average (DJIA), and the Fed Funds Rate, which is the base rate of overnight borrowing and sets the "tone" of much of the U.S. economy . Each of these cover very different components of the market, but in aggregate can indicate the market's overall confidence.
+
+**Dow Jones Industrial Average**: The DJIA covers a broad swathe of United States equities, and does best when the market is encouraged and expecting growth. Equities tend to have the highest rates of return due to their inherent riskier profile compared to bonds and credit instruments. Up ticks in the DJIA indicates a bull market.
+
+**10 Year Treasury Bonds**: Treasury bonds are notes of debt issued by the U.S. Government for a specific tenor (ten years in this case), the rates of which are highly correlated with the overnight rate set by the Fed. These rates are high when the Fed is attempting to restrict growth and potential inflation, and low to encourage a slumped economy. These are typically inversely related to the DJIA.
+
+**Federal Funds Effective Rate**: The federal funds rate is the overnight lending rate between banks, set by the Federal Reserve as its primary monetary policy tool. This rate is raised when the Fed seeks to cool an overheating economy and combat inflation, and lowered to stimulate economic activity during downturns. Changes in the federal funds rate directly influence borrowing costs throughout the economy and are typically inversely correlated with equity performance.
+
+The below visual illustrates how these metrics have interacted across the last decade. Their values have been min/max normalized to make them more comparable. Of particular note is the relationship between the DJIA and treasury bonds, and how the Fed Fund rate generally lags behind as a corrective measure.
+
 ```{r}
 # API Key - Normally wouldn't share this but specified in the instructions
 api_key <- "486191162bba8179c3f286918db61916"
 url <- "https://api.stlouisfed.org"
 url_ext <- "fred/series/observations"
-series <- c('DJIA', 'DGS10', 'UNRATE')
+series <- c('DJIA', 'DGS10', 'FEDFUNDS')
+start_date <- '2015-10-01'
+end_date <- '2024-12-31'
 
-```
+DJIA <- request("https://api.stlouisfed.org") |>
+  req_url_path_append(url_ext) |>
+  req_url_query(
+    api_key = api_key,
+    series_id = "DJIA",
+    file_type = "json",
+    observation_start = start_date, # YYYY-MM-DD formatted string
+    observation_end = end_date,
+    frequency = 'm'
+  ) |>
+  req_perform() |> 
+  resp_body_json()
 
-```{r}
-# Get data from the FRED API for each series
-all_data <- series |> 
-  map(~ {
-  response <- request("https://api.stlouisfed.org") |>
-    req_url_path_append(url_ext) |>
-    req_url_query(
-      api_key = api_key,
-      series_id = "DJIA",
-      file_type = "json",
-      observation_start = '2000-01-01', # YYYY-MM-DD formatted string
-      observation_end = '2024-12-31',
-      frequency = 'm'
-    ) |>
-    req_perform() |> 
-    resp_body_json()
-  }) |> 
-  set_names(series)
-```
+DGS10 <- request("https://api.stlouisfed.org") |>
+  req_url_path_append(url_ext) |>
+  req_url_query(
+    api_key = api_key,
+    series_id = "DGS10",
+    file_type = "json",
+    observation_start = start_date, # YYYY-MM-DD formatted string
+    observation_end = end_date,
+    frequency = 'm'
+  ) |>
+  req_perform() |> 
+  resp_body_json()
 
-```{r}
+FEDFUND <- request("https://api.stlouisfed.org") |>
+  req_url_path_append(url_ext) |>
+  req_url_query(
+    api_key = api_key,
+    series_id = "FEDFUNDS",
+    file_type = "json",
+    observation_start = start_date, # YYYY-MM-DD formatted string
+    observation_end = end_date,
+    frequency = 'm'
+  ) |>
+  req_perform() |> 
+  resp_body_json()
+
+
 # Extract the data to tibbles 
 extract_fred_data <- function(response) {
   response$observations |>
@@ -84,27 +115,72 @@ extract_fred_data <- function(response) {
 }
 
 # Define datasets
-djia_data <- all_data$DJIA |> extract_fred_data()
-dgs10_data <- all_data$DGS10 |> extract_fred_data()
-unrate_data <- all_data$UNRATE |> extract_fred_data()
+djia_data <- DJIA |> extract_fred_data()
+dgs10_data <- DGS10 |> extract_fred_data()
+FEDFUND_data <- FEDFUND |> extract_fred_data()
 
 # Append and melt
 combined_data <- bind_rows(
-  djia_data |> mutate(series_id = "Dow Jones Industrial Average"),
-  dgs10_data |> mutate(series_id = "10 Year Treasury Yields"), 
-  unrate_data |> mutate(series_id = "Unemployment Rate")
-) |>
-  pivot_longer(
-    cols = value,
-    values_to = "observation"
-  ) |> 
-  select(-name)
-  
+  djia_data |> mutate(series_id = "djia"),
+  dgs10_data |> mutate(series_id = "dgs10"), 
+  FEDFUND_data |> mutate(series_id = "fedfund")
+) |> 
+  pivot_wider(
+    names_from = series_id,
+    values_from = value
+  )
+
+combined_data <- combined_data |> 
+  mutate(across(
+    .cols = -date,
+    .fns = ~ (. - min(., na.rm = TRUE)) / (max(., na.rm = TRUE) - min(., na.rm=TRUE)),
+    .names = "{.col}_normalized"
+  ))
 ```
+
 
 ```{r}
 # Plot the time series
-plot(combined_data$date, combined_data$observation)
+combined_data <- combined_data[order(combined_data$date), ]
+
+source_colors <- c("#D55E00", "#0072B2", "#009E73")
+
+plot(
+  x=combined_data$date,
+  y=combined_data$djia_normalized,
+  col = source_colors[1],
+  type='l',
+  lwd=2,
+  lty=1,
+  main = "Normalized Economic Indicators Over Time",
+  sub = "Data Normalized to 0-1 scale",
+  xlab = "Date",
+  ylab="Normalized Value"
+  )
+
+lines(
+  x=combined_data$date,
+  y=combined_data$dgs10_normalized,
+  col = source_colors[2],
+  lwd=2,
+  lty=1
+  )
+
+lines(
+  x=combined_data$date,
+  y=combined_data$fedfund_normalized,
+  col = source_colors[3],
+  lwd=2,
+  lty=3
+  )
+
+legend("right",
+       legend = c("DJIA", "10-Year Treasury", "Fed Funds Rate"),
+       col = source_colors,
+       lty = c(1,1,3),
+       lwd =2,
+       cex = 0.8
+)
 ```
 
 
