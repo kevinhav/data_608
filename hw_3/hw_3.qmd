@@ -1,0 +1,69 @@
+---
+title: "Obesity and Healthcare Spending"
+subtitle: "DATA 608 - Story 3"
+author: "Kevin Havis"
+date: today
+date-format: "MMMM D, YYYY"
+format: 
+  pdf:
+    toc: false
+    number-sections: false 
+    colorlinks: true
+  html:
+    toc: false
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
+    theme: cosmo
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+  cache: false
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+```
+
+# Obesity and Healthcare Spending
+
+## Research Question
+
+Do differences in per capita healthcare spending correlate with adult obesity prevalence?
+
+## Analysis
+
+```{r}
+# Load datasets
+obesity_data <- readxl::read_xlsx("adult obesity.xlsx", sheet = 1)
+
+#www.kff.org/state-health-policy-data/state-indicator/health-spending-per-capita
+
+raw_per_capita <- read_csv("raw_data.csv", skip=2, quote="\"") |> 
+  slice(1:52) |> 
+  mutate(health_spend_per_capita = as.numeric(str_remove(`Health Spending per Capita`, "[$]"))) |> 
+  rename(state = Location) |>
+  filter(!(state %in% c("United States", "District of Columbia"))) |>
+  select(state, health_spend_per_capita)
+
+```
+
+```{r}
+# Combine datasets
+
+# Assign states to quintiles based on healthcare spending
+
+```
+
+```{r}
+# Build visualization
+# Use Viridis
+
+
+
+```
+
