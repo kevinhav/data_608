@@ -54,8 +54,17 @@ raw_per_capita <- read_csv("raw_data.csv", skip=2, quote="\"") |>
 
 ```{r}
 # Combine datasets
+combined_data <- obesity_data |> 
+  inner_join(raw_per_capita, by = c("State" = "state")) |> 
+  select(State, `Obesity %`, health_spend_per_capita) |> 
+  mutate(adult_obesity = as.numeric(str_remove(`Obesity %`, "[%]"))) |> 
+  drop_na()
 
 # Assign states to quintiles based on healthcare spending
+
+combined_data <- combined_data |> 
+  mutate(spend_quintile = ntile(health_spend_per_capita, 5)) |> 
+  mutate(spend_quintile = factor(spend_quintile, labels = c("1st (Lowest)", "2nd", "3rd", "4th", "5th (Highest)")))
 
 ```
 
@@ -63,7 +72,43 @@ raw_per_capita <- read_csv("raw_data.csv", skip=2, quote="\"") |>
 # Build visualization
 # Use Viridis
 
-
+ggplot(combined_data, aes(x = health_spend_per_capita, y = adult_obesity, color = spend_quintile)) +
+  geom_point(size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "darkgrey", linetype = "dashed") +
+  scale_color_viridis_d(option = "D", end = 0.8) +
+  labs(
+    title = "Adult Obesity vs. Healthcare Spending per Capita",
+    x = "Healthcare Spending per Capita (USD)",
+    y = "Adult Obesity Prevalence (%)",
+    color = "State Spending Quintile"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.position = "right"
+  )
 
 ```
+
+```{r}
+# Build box plot visual
+ggplot(combined_data, aes(x = spend_quintile, y = adult_obesity, fill = spend_quintile)) +
+  geom_boxplot() +
+  scale_fill_viridis_d(option = "D", end = 0.8) +
+  labs(
+    title = "Adult Obesity Prevalence by Healthcare Spending Quintile",
+    x = "Healthcare Spending Quintile",
+    y = "Adult Obesity Prevalence (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = "none"
+  )
+```
+
 

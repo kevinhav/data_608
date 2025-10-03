@@ -155,15 +155,17 @@ plot(
   main = "Normalized Economic Indicators Over Time",
   sub = "Data Normalized to 0-1 scale",
   xlab = "Date",
-  ylab="Normalized Value"
+  ylab="Normalized Value",
+  bty='l'
   )
+
 
 lines(
   x=combined_data$date,
   y=combined_data$dgs10_normalized,
   col = source_colors[2],
   lwd=2,
-  lty=1
+  lty=2
   )
 
 lines(
@@ -177,9 +179,10 @@ lines(
 legend("right",
        legend = c("DJIA", "10-Year Treasury", "Fed Funds Rate"),
        col = source_colors,
-       lty = c(1,1,3),
+       lty = c(1,2,3),
        lwd =2,
-       cex = 0.8
+       cex = 0.8,
+       bty = 'n'
 )
 ```
 
