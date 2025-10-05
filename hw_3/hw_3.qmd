@@ -37,6 +37,11 @@ Do differences in per capita healthcare spending correlate with adult obesity pr
 
 ## Analysis
 
+Comparing the quinintiles of healthcare spending per capita to the obesity rates in each state, we see a minor inverse relationship. This trend is not consistent however; the second lowest health care spend has a much higher IQR for obesity compared to both the 1st and 5th quintiles, and a similar exception can be seen with the fourth quantile. Outliers in both the lowest and highest groups are min and max extremes for the population.
+
+In summary, the inverse correlation between healthcare spend and obesity rates exists, but additional statistical analysis and data would likely better explain the relationship.
+
+
 ```{r}
 # Load datasets
 obesity_data <- readxl::read_xlsx("adult obesity.xlsx", sheet = 1)
@@ -69,7 +74,7 @@ combined_data <- combined_data |>
 ```
 
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # Calculate spending ranges for each quintile
 quintile_ranges <- combined_data %>%
   group_by(spend_quintile) %>%
@@ -93,9 +98,9 @@ ggplot(combined_data, aes(x = spend_quintile, y = adult_obesity, fill = spend_qu
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
-    axis.title.x = element_text(size = 14),
-    axis.title.y = element_text(size = 14),
+    plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_text(size = 10),
     legend.position = "none"
   )
 ```
